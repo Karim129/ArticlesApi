@@ -2,15 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Models\Article;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use App\Models\Article;
 
 class ArticleApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_create_an_article()
+    public function test_can_create_an_article(): void
     {
         $response = $this->postJson('/api/articles', [
             'title' => 'Sample Article',
@@ -19,33 +19,33 @@ class ArticleApiTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-                 ->assertJson([
-                     'success' => true,
-                     'message' => 'Article created successfully.',
-                 ]);
+            ->assertJson([
+                'success' => true,
+                'message' => 'Article created successfully.',
+            ]);
 
         $this->assertDatabaseHas('articles', ['title' => 'Sample Article']);
     }
 
-    public function test_can_list_all_articles()
+    public function test_can_list_all_articles(): void
     {
         Article::factory(10)->create();
 
         $response = $this->getJson('/api/articles');
 
         $response->assertStatus(200)
-                 ->assertJson([
-                     'success' => true,
-                 ])
-                 ->assertJsonStructure([
-                     'data' => [
-                         '*' => ['id', 'title', 'content', 'author', 'created_at', 'updated_at'],
-                     ],
-                     'message',
-                 ]);
+            ->assertJson([
+                'success' => true,
+            ])
+            ->assertJsonStructure([
+                'data' => [
+                    '*' => ['id', 'title', 'content', 'author', 'created_at', 'updated_at'],
+                ],
+                'message',
+            ]);
     }
 
-    public function test_can_filter_articles_by_author()
+    public function test_can_filter_articles_by_author(): void
     {
         Article::factory()->create(['author' => 'Jane Doe']);
         Article::factory()->create(['author' => 'John Doe']);
@@ -53,32 +53,32 @@ class ArticleApiTest extends TestCase
         $response = $this->getJson('/api/articles?author=Jane Doe');
 
         $response->assertStatus(200)
-                 ->assertJson([
-                     'success' => true,
-                 ])
-                 ->assertJsonFragment(['author' => 'Jane Doe']);
+            ->assertJson([
+                'success' => true,
+            ])
+            ->assertJsonFragment(['author' => 'Jane Doe']);
     }
 
-    public function test_can_get_specific_article()
+    public function test_can_get_specific_article(): void
     {
         $article = Article::factory()->create();
 
         $response = $this->getJson("/api/articles/{$article->id}");
 
         $response->assertStatus(200)
-                 ->assertJson([
-                     'success' => true,
-                     'data' => [
-                         'id' => $article->id,
-                         'title' => $article->title,
-                         'content' => $article->content,
-                         'author' => $article->author,
-                     ],
-                     'message' => 'Article retrieved successfully.',
-                 ]);
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'id' => $article->id,
+                    'title' => $article->title,
+                    'content' => $article->content,
+                    'author' => $article->author,
+                ],
+                'message' => 'Article retrieved successfully.',
+            ]);
     }
 
-    public function test_can_update_an_article()
+    public function test_can_update_an_article(): void
     {
         $article = Article::factory()->create();
 
@@ -87,30 +87,30 @@ class ArticleApiTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                 ->assertJson([
-                     'success' => true,
-                     'message' => 'Article updated successfully.',
-                 ]);
+            ->assertJson([
+                'success' => true,
+                'message' => 'Article updated successfully.',
+            ]);
 
         $this->assertDatabaseHas('articles', ['title' => 'Updated Title']);
     }
 
-    public function test_can_delete_an_article()
+    public function test_can_delete_an_article(): void
     {
         $article = Article::factory()->create();
 
         $response = $this->deleteJson("/api/articles/{$article->id}");
 
         $response->assertStatus(200)
-                 ->assertJson([
-                     'success' => true,
-                     'message' => 'Article deleted successfully.',
-                 ]);
+            ->assertJson([
+                'success' => true,
+                'message' => 'Article deleted successfully.',
+            ]);
 
         $this->assertDatabaseMissing('articles', ['id' => $article->id]);
     }
 
-    public function test_cannot_create_article_with_invalid_data()
+    public function test_cannot_create_article_with_invalid_data(): void
     {
         $response = $this->postJson('/api/articles', [
             'title' => '',
@@ -119,6 +119,6 @@ class ArticleApiTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['title', 'content', 'author']);
+            ->assertJsonValidationErrors(['title', 'content', 'author']);
     }
 }

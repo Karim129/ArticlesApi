@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\ArticleResource;
 use App\Models\Article;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 
 class ArticleController extends Controller
@@ -27,44 +28,81 @@ class ArticleController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string',
-            'content' => 'required|string|min:50',
-            'author' => 'required|string',
-        ]);
+        try {
+            // Validate input
+            $validated = $request->validate([
+                'title' => 'required|string',
+                'content' => 'required|string|min:50',
+                'author' => 'required|string',
+            ]);
 
-        $article = Article::create($request->all());
+            // Create the article
+            $article = Article::create($validated);
 
-        return $this->apiResponse(true, new ArticleResource($article), 'Article created successfully.');
+            return $this->apiResponse(true, new ArticleResource($article), 'Article created successfully.', 201);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Catch validation errors
+            return $this->apiResponse(false, $e->errors(), 'Validation Error', 422);
+        } catch (\Exception) {
+            // Catch all other errors
+            return $this->apiResponse(false, null, 'Internal Server Error', 500);
+        }
     }
 
-    public function show(Article $article)
+    public function show($id)
     {
+        try {
+            $article = Article::findOrFail($id);
 
-        return $this->apiResponse(true, new ArticleResource($article), 'Article retrieved successfully.');
+            return $this->apiResponse(true, new ArticleResource($article), 'Article retrieved successfully.');
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            return $this->apiResponse(false, null, 'Resource not found', 404);
+        } catch (\Exception) {
+            return $this->apiResponse(false, null, 'Internal Server Error', 500);
+        }
     }
 
-    public function update(Request $request, Article $article)
+    public function update(Request $request, $id)
     {
-        $request->validate([
-            'title' => 'sometimes|required|string',
-            'content' => 'sometimes|required|string|min:50',
-            'author' => 'sometimes|required|string',
-        ]);
+        try {
+            $article = Article::findOrFail($id);
 
-        $article->update($request->all());
+            // Validate input
+            $validated = $request->validate([
+                'title' => 'sometimes|required|string',
+                'content' => 'sometimes|required|string|min:50',
+                'author' => 'sometimes|required|string',
+            ]);
 
-        return $this->apiResponse(true, new ArticleResource($article), 'Article updated successfully.');
+            // Update the article
+            $article->update($validated);
 
+            return $this->apiResponse(true, new ArticleResource($article), 'Article updated successfully.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->apiResponse(false, $e->errors(), 'Validation Error', 422);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            return $this->apiResponse(false, null, 'Resource not found', 404);
+        } catch (\Exception) {
+            return $this->apiResponse(false, null, 'Internal Server Error', 500);
+        }
     }
 
-    public function destroy(Article $article)
+    public function destroy($id)
     {
-        $article->delete();
+        try {
+            $article = Article::findOrFail($id);
 
-        return $this->apiResponse(true, [], 'Article deleted successfully.');
+            $article->delete();
 
+            return $this->apiResponse(true, null, 'Article deleted successfully.');
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            return $this->apiResponse(false, null, 'Resource not found', 404);
+        } catch (\Exception) {
+            return $this->apiResponse(false, null, 'Internal Server Error', 500);
+        }
     }
 }
